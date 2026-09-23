@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*~
+
+# Outputs
+outputs/
+
+# Datasets
+data/
+datasets/
+
+# Model checkpoints
+*.pth
+*.pt
+*.ckpt
+
+# XAI raw arrays
+*.npy
+
+# Third-party repositories
+third_party/
+
+# macOS
+.DS_Store

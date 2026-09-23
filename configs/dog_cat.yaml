@@ -1,0 +1,98 @@
+seed: 42
+
+device:
+  require_cuda: true
+
+
+dataset:
+  root: /media/share/Member/ueki/datasets/dog_cat
+
+  classes:
+    - Cat
+    - Dog
+
+  manifest_dir: outputs/manifests
+
+  split:
+    train: 0.8
+    val: 0.1
+    test: 0.1
+
+
+image:
+  resize_size: 256
+  image_size: 224
+
+
+models:
+  resnet50:
+    enabled: true
+    pretrained: true
+    batch_size: 32
+    lr: 0.0001
+
+  densenet201:
+    enabled: false
+    pretrained: true
+    batch_size: 32
+    lr: 0.0001
+
+  vit_b_16:
+    enabled: false
+    pretrained: true
+    batch_size: 16
+    lr: 0.00001
+
+
+train:
+  epochs: 20
+  num_workers: 0
+  weight_decay: 0.0001
+
+
+xai:
+  backbones:
+    - resnet50
+    # - densenet201
+    # - vit_b_16
+
+  num_images: 10
+  sample_seed: 42
+
+  methods:
+    gradcam:
+      enabled: true
+
+    gradcam_plus_plus:
+      enabled: true
+
+    lime:
+      enabled: true
+
+    shap:
+      enabled: true
+
+    attention_rollout:
+      enabled: true
+
+  lime:
+    num_samples: 500
+    num_features: 10
+
+  shap:
+    nsamples: 64
+    background_size: 4
+
+
+faithfulness:
+  ratios:
+    - 0.10
+    - 0.20
+    - 0.30
+
+  random_repeats: 5
+
+output:
+  classification_root: outputs/classification
+  xai_root: outputs/xai
+  faithfulness_root: outputs/faithfulness
