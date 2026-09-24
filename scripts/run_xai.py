@@ -56,7 +56,7 @@ from src.xai.attention_rollout import (
 )
 
 from src.xai.plotting import (
-    save_xai_comparison,
+    save_xai_figure,
 )
 
 
@@ -384,28 +384,32 @@ def main():
             )
 
 
-            (
-                predicted_class,
-                probabilities,
-            ) = predict(
+            (predicted_class,probabilities) = predict(
                 model,
                 input_tensor,
             )
 
-
+            probabilities = np.asarray(
+                probabilities
+            )
+            
+            if probabilities.ndim == 2:
+                probabilities = probabilities[0]
+            
+            predicted_index = int(
+                np.argmax(
+                    probabilities
+                )
+            )
+            
             predicted_probability = float(
                 probabilities[
-                    predicted_class
+                    predicted_index
                 ]
             )
 
 
-            predicted_name = (
-                classes[
-                    predicted_class
-                ]
-            )
-
+            predicted_name = classes[predicted_class]
 
             # =================================================
             # IMPORTANT
@@ -413,11 +417,6 @@ def main():
             # XAI target is ALWAYS the predicted class.
             # Ground Truth is never used as XAI target.
             # =================================================
-
-            target_class = (
-                predicted_class
-            )
-
 
             print(
                 f"[{index}/"
@@ -457,12 +456,8 @@ def main():
                     "Grad-CAM"
                 ] = explain_cam(
                     model=model,
-                    input_tensor=(
-                        input_tensor
-                    ),
-                    target_class=(
-                        target_class
-                    ),
+                    input_tensor=input_tensor,
+                    predicted_class=predicted_class,
                     backbone=backbone,
                     method="gradcam",
                 )
@@ -490,16 +485,10 @@ def main():
                     "Grad-CAM++"
                 ] = explain_cam(
                     model=model,
-                    input_tensor=(
-                        input_tensor
-                    ),
-                    target_class=(
-                        target_class
-                    ),
+                    input_tensor=input_tensor,
+                    predicted_class=predicted_class,
                     backbone=backbone,
-                    method=(
-                        "gradcam_plus_plus"
-                    ),
+                    method="gradcam_plus_plus",
                 )
 
 
@@ -520,9 +509,7 @@ def main():
                 ] = explain_lime(
                     model=model,
                     image=image,
-                    target_class=(
-                        target_class
-                    ),
+                    predicted_class=predicted_class,
                     device=device,
                     num_samples=int(
                         xai_cfg[
@@ -532,11 +519,7 @@ def main():
                         ]
                     ),
                     num_features=int(
-                        xai_cfg[
-                            "lime"
-                        ][
-                            "num_features"
-                        ]
+                        xai_cfg["lime"]["num_features"]
                     ),
                 )
 
@@ -545,40 +528,18 @@ def main():
             # SHAP
             # =================================================
 
-            if (
-                methods_cfg[
-                    "shap"
-                ][
-                    "enabled"
-                ]
-            ):
+            if methods_cfg["shap"]["enabled"]:
 
                 heatmaps[
                     "SHAP"
                 ] = explain_shap(
                     model=model,
-                    input_tensor=(
-                        input_tensor
-                    ),
-                    target_class=(
-                        target_class
-                    ),
-                    nsamples=int(
-                        xai_cfg[
-                            "shap"
-                        ][
-                            "nsamples"
-                        ]
-                    ),
-                    background_size=int(
-                        xai_cfg[
-                            "shap"
-                        ][
-                            "background_size"
-                        ]
+                    input_tensor=input_tensor,
+                    predicted_class=predicted_class,
+                    nsamples=int(xai_cfg["shap"]["nsamples"]),
+                    background_size=int(xai_cfg["shap"]["background_size"]
                     ),
                 )
-
 
             # =================================================
             # Attention Rollout
@@ -587,12 +548,7 @@ def main():
             # class-agnostic
             # =================================================
 
-            if (
-                methods_cfg[
-                    "attention_rollout"
-                ][
-                    "enabled"
-                ]
+            if (methods_cfg["attention_rollout"]["enabled"]
                 and
                 backbone
                 == "vit_b_16"
@@ -610,15 +566,11 @@ def main():
                     )
                 )
 
-
             # =================================================
             # Unique case ID
             # =================================================
 
-            relative_object = Path(
-                relative_path
-            )
-
+            relative_object = Path(relative_path)
 
             case_id = (
                 "__".join(
@@ -627,7 +579,6 @@ def main():
                     .parts
                 )
             )
-
 
             # =================================================
             # Save raw heatmaps
@@ -708,20 +659,12 @@ def main():
                 / f"{case_id}_xai.png"
             )
 
-
-            save_xai_comparison(
+            save_xai_figure(
                 image=image,
                 heatmaps=heatmaps,
-                output_path=(
-                    figure_path
-                ),
-                title=(
-                    f"Predicted: "
-                    f"{predicted_name}"
-                    " | "
-                    f"Probability: "
-                    f"{predicted_probability:.4f}"
-                ),
+                predicted_class=predicted_class,
+                probability=predicted_probability,
+                output_path=figure_path,
             )
 
 
